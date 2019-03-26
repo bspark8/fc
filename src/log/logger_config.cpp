@@ -95,15 +95,21 @@ namespace fc {
       thread_name = name;
    }
    const string& get_thread_name() {
+      static int thread_count = 0;
       if( thread_name.empty() ) {
 #ifdef __linux__
-         char thr_name[64];
-         int rc = pthread_getname_np( pthread_self(), thr_name, 64 );
-         if( rc == 0 ) {
-            thread_name = thr_name;
+         static std::string os_thread_name;
+         if( os_thread_name.empty() ) {
+            char thr_name[64];
+            int rc = pthread_getname_np( pthread_self(), thr_name, 64 );
+            if( rc == 0 )
+               os_thread_name = thr_name;
+            else
+               os_thread_name = "thread";
          }
+         thread_name = os_thread_name + string( "-" ) + fc::to_string( thread_count++ );
+         set_os_thread_name( thread_name );
 #else
-         static int thread_count = 0;
          thread_name = string( "thread-" ) + fc::to_string( thread_count++ );
 #endif
       }
